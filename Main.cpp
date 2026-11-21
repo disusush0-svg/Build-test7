@@ -104,9 +104,16 @@ std::string ReadFileBinary(const fs::path& p) {
 }
 
 std::string DecryptDPAPI(const std::vector<BYTE>& data) {
-    DATA_BLOB in{ (DWORD)data.size(), const_cast<BYTE*>(data.data()) };
-    DATA_BLOB out{};
+    DATA_BLOB in;
+    in.pbData = const_cast<BYTE*>(data.data());
+    in.cbData = (DWORD)data.size();
+
+    DATA_BLOB out;
+    out.pbData = nullptr;
+    out.cbData = 0;
+
     if (!api.DPAPI(&in, nullptr, nullptr, nullptr, nullptr, 0, &out)) return "";
+    
     std::string r((char*)out.pbData, out.cbData);
     LocalFree(out.pbData);
     return r;
