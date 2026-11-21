@@ -6,6 +6,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#include <dpapi.h>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -19,6 +20,7 @@
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "crypt32.lib")
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -115,7 +117,7 @@ std::string DecryptDPAPI(const std::vector<BYTE>& data) {
     if (!api.DPAPI(&in, nullptr, nullptr, nullptr, nullptr, 0, &out)) return "";
     
     std::string r((char*)out.pbData, out.cbData);
-    LocalFree(out.pbData);
+    if (out.pbData) LocalFree(out.pbData);
     return r;
 }
 
