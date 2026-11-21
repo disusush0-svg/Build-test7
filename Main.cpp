@@ -1,3 +1,5 @@
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <filesystem>
 #include <fstream>
@@ -11,6 +13,7 @@
 
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -138,12 +141,16 @@ std::string GetPublicIP() {
 std::string GetLocalIP() {
     char host[256];
     if (gethostname(host, sizeof(host)) != 0) return "";
-    addrinfo hints{}, *res = nullptr;
+    
+    struct addrinfo hints = {};
+    struct addrinfo *res = nullptr;
     hints.ai_family = AF_INET;
+    
     if (getaddrinfo(host, nullptr, &hints, &res) != 0) return "";
+    
     char buf[INET_ADDRSTRLEN] = "";
     if (res) {
-        auto* sa = (sockaddr_in*)res->ai_addr;
+        struct sockaddr_in* sa = (struct sockaddr_in*)res->ai_addr;
         inet_ntop(AF_INET, &sa->sin_addr, buf, sizeof(buf));
         freeaddrinfo(res);
     }
