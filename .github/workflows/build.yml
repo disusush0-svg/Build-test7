@@ -5,12 +5,28 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Setup vcpkg
+      uses: actions/checkout@v4
+      with:
+        repository: microsoft/vcpkg
+        path: vcpkg
+        fetch-depth: 1
+        
+    - name: Bootstrap vcpkg
+      run: .\vcpkg\bootstrap-vcpkg.bat
+      shell: cmd
+
     - name: Install nlohmann-json
-      run: vcpkg install nlohmann-json
+      run: .\vcpkg\vcpkg install nlohmann-json
+      shell: cmd
+
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+      run: cmake -B build -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      
     - name: Build
       run: cmake --build build --config Release
+      
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
