@@ -26,9 +26,8 @@ jobs:
       shell: cmd
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-      shell: bash
-
+      run: >-
+  cmake -B build -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
     - name: Build
       run: cmake --build build --config Release
 
